@@ -21,6 +21,7 @@ class Genre(models.Model):
 
 class Title(models.Model):
     name = models.CharField(max_length=256)
+    year = models.IntegerField() #позже допишу валидатор
     description = models.TextField()
     genre = models.ManyToManyField(
         Genre,
@@ -33,28 +34,35 @@ class Title(models.Model):
         blank=True,
         related_name='category'
     )
-    year = models.IntegerField()
 
     def __str__(self):
         return f'{self.name}'
 
 class Review(models.Model):
-    title_id = models.ForeignKey(
+    title = models.ForeignKey(
         Title,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='review'
     )
     text = models.TextField()
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='review'
+    )
     score = models.IntegerField()
 
 
 class Comment(models.Model):
-    review_id = models.ForeignKey(
+    review = models.ForeignKey(
         Review,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='comments'
     )
+    text = models.TextField()
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE
+        related_name='comments'
     )
-    text = models.TextField()
-    pub_date = models.DateTimeField(auto_now=True)
+    pub_date = models.DateTimeField(auto_now_add=True)
