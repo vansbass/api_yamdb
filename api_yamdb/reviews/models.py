@@ -62,7 +62,7 @@ class Comment(models.Model):
     text = models.TextField()
     author = models.ForeignKey(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
         related_name='comments'
     )
     pub_date = models.DateTimeField(auto_now_add=True)

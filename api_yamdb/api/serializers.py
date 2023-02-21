@@ -6,20 +6,43 @@ from reviews.models import (
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    pass
+    class Meta:
+        model = Category
+        fields = ['name', 'slug']
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    pass
+    author = serializers.SlugRelatedField(
+        slug_field='', #Его пока нет
+        read_only=True
+    )
+    class Meta:
+        model = Comment
+        fields = ['id', 'text', 'author', 'pub_date']
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    pass
+    class Meta:
+        model = Genre
+        fields = ['name', 'slug']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    pass
+    author = serializers.SlugRelatedField(
+        slug_field='',  #Его пока нет
+        read_only=True
+    )
+    class Meta:
+        model = Review
+        fields = ['id', 'text', 'author', 'score', 'pub_date']
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    pass
+    genre = serializers.SlugRelatedField(
+        slug_field='slug',
+        read_only=True,
+        many=True,
+    )
+    class Meta:
+        model = Title
+        fields = ['name', 'year', 'description', 'genre', 'category']
