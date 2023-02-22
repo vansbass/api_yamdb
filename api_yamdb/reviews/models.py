@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
-User = get_user_model() #заменим позже на переопределенную модель
+User = get_user_model()  # Заменим позже на переопределенную модель
 
 
 class Category(models.Model):
@@ -19,9 +19,10 @@ class Genre(models.Model):
     def __str__(self):
         return f'{self.name}'
 
+
 class Title(models.Model):
     name = models.CharField(max_length=256)
-    year = models.IntegerField() #позже допишу валидатор
+    year = models.IntegerField()  # позже допишу валидатор
     rating = models.IntegerField()
     description = models.TextField()
     genre = models.ManyToManyField(
@@ -39,6 +40,7 @@ class Title(models.Model):
     def __str__(self):
         return f'{self.name}'
 
+
 class Review(models.Model):
     title = models.ForeignKey(
         Title,
@@ -54,7 +56,6 @@ class Review(models.Model):
     score = models.PositiveSmallIntegerField()
     pub_date = models.DateField(auto_now_add=True)
 
-    # Предлагаю сделать ограничение тут, т.к сериализатор не обрабатывает поле 'title' по Redoc'у
     class Meta:
         constraints = [
             models.UniqueConstraint(

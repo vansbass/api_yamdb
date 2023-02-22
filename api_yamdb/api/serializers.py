@@ -41,8 +41,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         return value
 
     class Meta:
-        model = Review  # Тут думаю нужно продумать валидацию один автор - одно ревью
-        fields = ['id', 'text', 'author', 'score', 'pub_date'] 
+        model = Review
+        fields = ['id', 'text', 'author', 'score', 'pub_date']
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -51,6 +51,7 @@ class TitleSerializer(serializers.ModelSerializer):
         read_only=True,
         many=True,
     )
+
     class Meta:
         model = Title
         fields = ['name', 'year', 'description', 'genre', 'category']
