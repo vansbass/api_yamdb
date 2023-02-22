@@ -13,9 +13,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        slug_field='', #Его пока нет
+        slug_field='',  # Его пока нет
         read_only=True
     )
+
     class Meta:
         model = Comment
         fields = ['id', 'text', 'author', 'pub_date']
@@ -29,11 +30,18 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        slug_field='',  #Его пока нет
+        slug_field='',  # Его пока нет
         read_only=True
     )
+
+    def validate_score(self, value):
+        """Check that score in range 0 - 10"""
+        if value > 10 or value < 0:
+            raise serializers.ValidationError("Score not in range 0-10")
+        return value
+
     class Meta:
-        model = Review #Тут думаю нужно продумать валидацию один автор - одно ревью
+        model = Review  # Тут думаю нужно продумать валидацию один автор - одно ревью
         fields = ['id', 'text', 'author', 'score', 'pub_date'] 
 
 
