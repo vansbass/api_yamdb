@@ -54,6 +54,15 @@ class Review(models.Model):
     score = models.IntegerField()
     pub_date = models.DateField(auto_now_add=True)
 
+    # Предлагаю сделать ограничение тут, т.к сериализатор не обрабатывает поле 'title' по Redoc'у
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='unique_title_author'
+            )
+        ]
+
 
 class Comment(models.Model):
     review = models.ForeignKey(
