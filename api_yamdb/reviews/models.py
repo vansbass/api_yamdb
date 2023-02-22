@@ -22,7 +22,7 @@ class Genre(models.Model):
 class Title(models.Model):
     name = models.CharField(max_length=256)
     year = models.IntegerField() #позже допишу валидатор
-    rating = models.ImageField()
+    rating = models.IntegerField()
     description = models.TextField()
     genre = models.ManyToManyField(
         Genre,
