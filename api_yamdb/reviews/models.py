@@ -43,15 +43,15 @@ class Review(models.Model):
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        related_name='review'
+        related_name='reviews'
     )
     text = models.TextField()
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='review'
+        related_name='reviews'
     )
-    score = models.IntegerField()
+    score = models.PositiveSmallIntegerField()
     pub_date = models.DateField(auto_now_add=True)
 
     # Предлагаю сделать ограничение тут, т.к сериализатор не обрабатывает поле 'title' по Redoc'у
