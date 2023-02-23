@@ -11,6 +11,7 @@ class TitleAdmin(admin.ModelAdmin):
     )
     list_editable = ('category',)
 
+
 admin.site.register(Title, TitleAdmin)
 admin.site.register(Genre)
 admin.site.register(Category)
