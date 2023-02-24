@@ -13,7 +13,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        slug_field='',  # Его пока нет
+        slug_field='username',
         read_only=True
     )
 
@@ -30,7 +30,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        slug_field='',  # Его пока нет
+        slug_field='username',  
         read_only=True
     )
 
