@@ -26,7 +26,7 @@ router.register(
 
 urlpatterns = [
     path('api/v1/', include(router.urls)),
-    path('api/v1/token/',
+    path('api/v1/auth/token/',
          TokenObtainPairView.as_view(),
          name='token_obtain_pair'),
 ]
