@@ -12,7 +12,8 @@ from .serializers import RegistrationSerializer, TokenSerializer
 
 class RegistrationViewSet(viewsets.ModelViewSet):
     """
-    Разрешить всем пользователям (аутентифицированным и нет) доступ к данному эндпоинту.
+    Разрешить всем пользователям (аутентифицированным и нет)
+    доступ к данному эндпоинту.
     """
     queryset = User.objects.all()
     permission_classes = (AllowAny,)

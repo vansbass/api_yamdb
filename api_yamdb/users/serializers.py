@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from django.core.mail import send_mail
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
+
 from .models import User
 
 
