@@ -16,6 +16,7 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=150)
     bio = models.TextField(max_length=500, blank=True)
     role = models.CharField(choices=ROLE_CHOICES, default='user', max_length=9)
+    confirmation_code = models.CharField(max_length=8, blank=True)
 
     def __str__(self):
         return f'{self.first_name} - {self.last_name}'
