@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.views import APIView
 
 from .serializers import (
     CategorySerializer, CommentSerializer, GenreSerializer,
@@ -76,3 +77,14 @@ class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = ()
+
+
+class UsernameViewSet(ModelViewSet):
+    serializer_class = UserSerializer
+
+    def get_queryset(self):
+        print('!!!!!!')
+        username = self.kwargs.get('username')
+        print(username)
+        user = get_object_or_404(User, username=username)
+        return user
