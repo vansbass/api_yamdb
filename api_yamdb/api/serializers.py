@@ -60,17 +60,21 @@ class TitleSerializer(serializers.ModelSerializer):
 
     def get_rating(self, obj):
         rating = obj.reviews.aggregate(Avg('score'))['score__avg']
-        return rating
+        if rating is not None:
+            return round(rating)
+        return None
 
     class Meta:
         model = Title
-        fields = ['id', 'name', 'year', 'rating', 'description', 'genre', 'category']
+        fields = ['id', 'name', 'year', 'rating',
+                  'description', 'genre', 'category']
         read_only_fields = ['id']
-    
+
     def validate_year(self, value):
         year_now = datetime.now().year
         if value > year_now:
-            raise serializers.ValidationError("Будущиее еще не наступило")
+            raise serializers.ValidationError(
+                "Будущее еще не наступило")
         return value
 
     def create(self, validated_data):
@@ -94,4 +98,5 @@ class TitleSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
+        fields = ['username', 'email', 'first_name',
+                  'last_name', 'bio', 'role']
