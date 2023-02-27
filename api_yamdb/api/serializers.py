@@ -6,6 +6,7 @@ from django.db.models import Avg
 from reviews.models import (
     Category, Comment, Genre, Review, Title
 )
+from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -88,3 +89,9 @@ class TitleSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         self.fields['category'] = CategorySerializer()
         return super().to_representation(instance)
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']

@@ -1,13 +1,15 @@
 from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from .serializers import (
     CategorySerializer, CommentSerializer, GenreSerializer,
-    ReviewSerializer, TitleSerializer
+    ReviewSerializer, TitleSerializer, UserSerializer
 )
 from reviews.models import (
     Category, Genre, Review, Title
 )
+from users.models import User
 
 
 # POST, GET(list), DEL методы, остальные запрещены
@@ -43,13 +45,14 @@ class GenreViewSet(ModelViewSet):
 # POST, GET(list, single), DEL, PUT, PUTCH методы, остальные запрещены
 class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = ()
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         return title.reviews.all()
 
     def perform_create(self, serializer):
+        print(self.request.user)
         serializer.save(
             author=self.request.user,
             title=get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -70,4 +73,6 @@ class TitleViewSet(ModelViewSet):
 
 # Дописать как появится переписанный юзер
 class UserViewSet(ModelViewSet):
-    pass
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = ()

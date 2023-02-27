@@ -5,12 +5,13 @@ from users.views import RegistrationViewSet, TokenView
 
 from .views import (
     CategoryViewSet, CommentViewSet, GenreViewSet,
-    ReviewViewSet, TitleViewSet
+    ReviewViewSet, TitleViewSet, UserViewSet
 )
 
 app_name = 'api'
 
 router = routers.DefaultRouter()
+router.register(r'users', UserViewSet, basename='users')
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'genres', GenreViewSet, basename='genres')
 router.register(r'titles', TitleViewSet, basename='titles')
