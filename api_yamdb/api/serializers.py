@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from rest_framework import serializers
 from django.db.models import Avg
 
@@ -47,12 +49,12 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    genre = serializers.SlugRelatedField(
-        slug_field='slug',
-        read_only=True,
-        many=True,
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(), slug_field='slug'
     )
-
+    genre = serializers.SlugRelatedField(
+        many=True, queryset=Genre.objects.all(), slug_field='slug'
+    )
     rating = serializers.SerializerMethodField()
 
     def get_rating(self, obj):
@@ -61,5 +63,28 @@ class TitleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description', 'genre',
-                  'category')
+        fields = ['id', 'name', 'year', 'rating', 'description', 'genre', 'category']
+        read_only_fields = ['id']
+    
+    def validate_year(self, value):
+        year_now = datetime.now().year
+        if value > year_now:
+            raise serializers.ValidationError("Будущиее еще не наступило")
+        return value
+
+    def create(self, validated_data):
+        genre_data = validated_data.pop('genre', [])
+        category_data = validated_data.pop('category', None)
+        if category_data is not None:
+            category = Category.objects.get(slug=category_data)
+            validated_data['category'] = category
+        instance = super().create(validated_data)
+        for slug in genre_data:
+            genre = Genre.objects.get(slug=slug)
+            instance.genre.add(genre)
+        instance.save()
+        return instance
+
+    def to_representation(self, instance):
+        self.fields['category'] = CategorySerializer()
+        return super().to_representation(instance)

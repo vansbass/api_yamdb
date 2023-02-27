@@ -62,6 +62,11 @@ class TitleViewSet(ModelViewSet):
     serializer_class = TitleSerializer
     permission_classes = ()
 
+    def perform_create(self, serializer):
+        genre_slugs = self.request.data.get('genre')
+        genres = Genre.objects.filter(slug__in=genre_slugs)
+        serializer.save(genre=genres)
+
 
 # Дописать как появится переписанный юзер
 class UserViewSet(ModelViewSet):

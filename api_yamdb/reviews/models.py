@@ -1,10 +1,10 @@
 from django.db import models
-from django.contrib.auth import get_user_model
+
 from users.models import User
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=256, unique=True)
     slug = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
@@ -12,7 +12,7 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=256, unique=True)
     slug = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
@@ -21,8 +21,8 @@ class Genre(models.Model):
 
 class Title(models.Model):
     name = models.CharField(max_length=256)
-    year = models.IntegerField()  # позже допишу валидатор
-    rating = models.IntegerField()
+    year = models.IntegerField()
+    rating = models.IntegerField(blank=True, null=True)
     description = models.TextField()
     genre = models.ManyToManyField(
         Genre,
