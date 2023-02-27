@@ -36,3 +36,12 @@ class TokenSerializer(serializers.Serializer):
         max_length=10,
     )
     username = serializers.CharField(max_length=150)
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """ Ощуществляет сериализацию и десериализацию объектов User. """
+    role = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']

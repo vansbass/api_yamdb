@@ -1,13 +1,15 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework import generics
 from .models import User
+from rest_framework.decorators import action
 
-from .serializers import RegistrationSerializer, TokenSerializer
+from .serializers import RegistrationSerializer, TokenSerializer, UserSerializer
 
 
 class RegistrationViewSet(viewsets.ModelViewSet):
@@ -49,3 +51,16 @@ class TokenView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class UserRetrieveUpdateAPIView(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    @action(detail=True, methods=['get, patch'])
+    def me(self, request):
+        return self.retrieve(request, request.user)
