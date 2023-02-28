@@ -4,16 +4,14 @@ from rest_framework import routers
 from users.views import RegistrationViewSet, TokenView, UserRetrieveUpdateAPIView
 
 from .views import (
-    CategoryViewSet, CommentViewSet, GenreViewSet,
-    ReviewViewSet, TitleViewSet
+    CategoryDeleteView, CategoriesView, CommentViewSet,
+    GenreDeleteView, GenreView, ReviewViewSet, TitleViewSet
 )
 
 app_name = 'api'
 
 router = routers.DefaultRouter()
 
-router.register(r'categories', CategoryViewSet, basename='category')
-router.register(r'genres', GenreViewSet, basename='genres')
 router.register(r'titles', TitleViewSet, basename='titles')
 router.register(
     r'titles/(?P<title_id>\d+)/reviews',
@@ -30,5 +28,9 @@ router.register(r'users', UserRetrieveUpdateAPIView, basename='users')
 urlpatterns = [
     path('api/v1/', include(router.urls)),
     path('api/v1/auth/token/', TokenView.as_view()),
+    path('api/v1/categories/', CategoriesView.as_view()),
+    path('api/v1/categories/<slug:slug>/', CategoryDeleteView.as_view()),
+    path('api/v1/genres/', GenreView.as_view()),
+    path('api/v1/genres/<slug:slug>/', GenreDeleteView.as_view())
     # path('api/v1/users/me/', UserRetrieveUpdateAPIView.as_view()),
 ]

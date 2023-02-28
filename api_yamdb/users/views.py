@@ -5,11 +5,12 @@ from rest_framework import viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework import generics
+from rest_framework import filters
 from .models import User
 from rest_framework.decorators import action
 
 from .serializers import RegistrationSerializer, TokenSerializer, UserSerializer
+from api.permissions import AdminPermission
 
 
 class RegistrationViewSet(viewsets.ModelViewSet):
@@ -57,6 +58,8 @@ class UserRetrieveUpdateAPIView(viewsets.ModelViewSet):
     queryset = User.objects.all()
     permission_classes = (IsAuthenticated,)
     serializer_class = UserSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ('username',)
 
     def get_object(self):
         return self.request.user
