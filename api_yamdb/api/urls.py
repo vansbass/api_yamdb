@@ -12,7 +12,7 @@ app_name = 'api'
 
 router = routers.DefaultRouter()
 
-router.register(r'^users/(?P<username>[\w.@+-]+)/$', UsernameViewSet, basename='username')
+router.register(r'^users/(?P<username>[\w.@+-]+)', UsernameViewSet, basename='username')
 router.register(r'users', UserViewSet, basename='users')
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'genres', GenreViewSet, basename='genres')
