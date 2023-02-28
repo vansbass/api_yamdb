@@ -1,8 +1,9 @@
 from datetime import datetime
 import re
 
+from django.http import Http404
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
+from rest_framework import serializers, validators
 from django.db.models import Avg
 
 from reviews.models import (
@@ -42,7 +43,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
     def validate_slug(self, value):
         if not re.match('^[-a-zA-Z0-9_]+$', value):
-            raise exceptions.ValidationError('Некоректный slug')
+            raise serializers.ValidationError('Некоректный slug')
         return value
 
 
@@ -83,6 +84,13 @@ class TitleSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'year', 'rating',
                   'description', 'genre', 'category']
         read_only_fields = ['id']
+        validators = [
+            validators.UniqueTogetherValidator(
+            queryset=Title.objects.all(),
+            fields=['name', 'category'],
+            message='Такая запись уже есть'
+            )
+        ]
 
     def validate_year(self, value):
         year_now = datetime.now().year
@@ -94,18 +102,25 @@ class TitleSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         genre_data = validated_data.get('genre')
         category_data = validated_data.get('category')
-        if category_data is not None:
-            category = get_object_or_404(Category, slug=category_data)
-            validated_data['category'] = category
+        print(genre_data)
+        try:
+            if category_data is not None:
+                category = get_object_or_404(Category, name=category_data)
+                validated_data['category'] = category
+        except Http404:
+            raise serializers.ValidationError('Такой категории нет')
         instance = super().create(validated_data)
-        if genre_data is not None:
-            for slug in genre_data:
-                genre = get_object_or_404(Genre, slug=slug)
-                instance.genre.add(genre)
+        try:
+            if genre_data is not None:
+                for genre in genre_data:
+                    instance.genre.add(genre)
+        except Http404:
+            raise serializers.ValidationError('Такого жанра нет')
         instance.save()
         return instance
-
+    
     def to_representation(self, instance):
+        self.fields['genre'] = GenreSerializer(many=True)
         self.fields['category'] = CategorySerializer()
         return super().to_representation(instance)
 
