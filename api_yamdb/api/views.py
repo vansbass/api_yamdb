@@ -53,7 +53,6 @@ class ReviewViewSet(ModelViewSet):
         return title.reviews.all()
 
     def perform_create(self, serializer):
-        print(self.request.user)
         serializer.save(
             author=self.request.user,
             title=get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -81,10 +80,8 @@ class UserViewSet(ModelViewSet):
 
 class UsernameViewSet(ModelViewSet):
     serializer_class = UserSerializer
+    pagination_class = ()
 
     def get_queryset(self):
-        print('!!!!!!')
         username = self.kwargs.get('username')
-        print(username)
-        user = get_object_or_404(User, username=username)
-        return user
+        return User.objects.filter(username=username)

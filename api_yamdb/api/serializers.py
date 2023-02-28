@@ -1,5 +1,7 @@
 from datetime import datetime
+import re
 
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from django.db.models import Avg
 
@@ -10,6 +12,12 @@ from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
+
+    def validate_slug(self, value):
+        if not re.match('^[-a-zA-Z0-9_]+$', value):
+            raise serializers.ValidationError('Некоректный slug')
+        return value
+    
     class Meta:
         model = Category
         fields = ('name', 'slug')
@@ -27,9 +35,15 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Genre
         fields = ('name', 'slug')
+
+    def validate_slug(self, value):
+        if not re.match('^[-a-zA-Z0-9_]+$', value):
+            raise exceptions.ValidationError('Некоректный slug')
+        return value
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -78,15 +92,16 @@ class TitleSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        genre_data = validated_data.pop('genre', [])
-        category_data = validated_data.pop('category', None)
+        genre_data = validated_data.get('genre')
+        category_data = validated_data.get('category')
         if category_data is not None:
-            category = Category.objects.get(slug=category_data)
+            category = get_object_or_404(Category, slug=category_data)
             validated_data['category'] = category
         instance = super().create(validated_data)
-        for slug in genre_data:
-            genre = Genre.objects.get(slug=slug)
-            instance.genre.add(genre)
+        if genre_data is not None:
+            for slug in genre_data:
+                genre = get_object_or_404(Genre, slug=slug)
+                instance.genre.add(genre)
         instance.save()
         return instance
 
