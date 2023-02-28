@@ -13,15 +13,15 @@ from reviews.models import (
 from users.models import User
 
 
-# POST, GET(list), DEL методы, остальные запрещены
 class CategoryViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'delete']
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = ()
 
 
-# POST, GET(list, single), DEL, PUT, PUTCH методы, остальные запрещены
 class CommentViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = CommentSerializer
     permission_classes = ()
 
@@ -36,15 +36,15 @@ class CommentViewSet(ModelViewSet):
         )
 
 
-# POST, GET(list), DEL методы, остальные запрещены
 class GenreViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'delete']
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = ()
 
 
-# POST, GET(list, single), DEL, PUT, PUTCH методы, остальные запрещены
 class ReviewViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete']
     serializer_class = ReviewSerializer
     permission_classes = (IsAuthenticated,)
 
@@ -59,8 +59,8 @@ class ReviewViewSet(ModelViewSet):
         )
 
 
-# POST, GET(list, single), DEL, PUT, PUTCH методы, остальные запрещены
 class TitleViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     permission_classes = ()
@@ -69,20 +69,3 @@ class TitleViewSet(ModelViewSet):
         genre_slugs = self.request.data.get('genre')
         genres = Genre.objects.filter(slug__in=genre_slugs)
         serializer.save(genre=genres)
-
-
-# Дописать как появится переписанный юзер
-class UserViewSet(ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = ()
-
-
-class UsernameViewSet(ModelViewSet):
-    serializer_class = UserSerializer
-    pagination_class = ()
-    pagination_class = None
-
-    def get_queryset(self):
-        username = self.kwargs.get('username')
-        return User.objects.filter(username=username)
