@@ -81,6 +81,7 @@ class UserViewSet(ModelViewSet):
 class UsernameViewSet(ModelViewSet):
     serializer_class = UserSerializer
     pagination_class = ()
+    pagination_class = None
 
     def get_queryset(self):
         username = self.kwargs.get('username')

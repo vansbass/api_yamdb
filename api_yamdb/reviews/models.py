@@ -36,6 +36,9 @@ class Title(models.Model):
         related_name='category'
     )
 
+    class Meta:
+        ordering = ['-year']
+
     def __str__(self):
         return f'{self.name}'
 
@@ -56,6 +59,7 @@ class Review(models.Model):
     pub_date = models.DateField(auto_now_add=True)
 
     class Meta:
+        ordering = ['-pub_date']
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'author'],
@@ -63,6 +67,8 @@ class Review(models.Model):
             )
         ]
 
+    def __str__(self):
+        return self.text
 
 class Comment(models.Model):
     review = models.ForeignKey(
@@ -77,3 +83,9 @@ class Comment(models.Model):
         related_name='comments'
     )
     pub_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-pub_date']
+
+    def __str__(self):
+        return self.text
