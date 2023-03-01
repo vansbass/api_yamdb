@@ -22,7 +22,6 @@ class CategorySerializer(serializers.ModelSerializer):
         if not re.match('^[-a-zA-Z0-9_]+$', value):
             raise serializers.ValidationError('Некоректный slug')
         return value
-    
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -65,7 +64,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         if title.reviews.filter(author=author).exists():
             # Но разрешаем модератору делать PATCH и PUT-запрос
             if self.context['request'].method != ('PATCH' or 'PUT'):
-                raise serializers.ValidationError('Вы можете оставить только один отзыв')
+                raise serializers.ValidationError(
+                    'Вы можете оставить только один отзыв')
         return data
 
     def validate_score(self, value):
@@ -77,6 +77,13 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
+        # validators = [
+        #     validators.UniqueTogetherValidator(
+        #     queryset=Title.objects.all(),
+        #     fields=['id', 'author'],
+        #     message='Такая запись уже есть'
+        #     )
+        # ]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -84,79 +91,48 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'email', 'first_name',
                   'last_name', 'bio', 'role']
-        
 
-class TitleSerializerRead(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(many=True, read_only=True)
-    rating = serializers.SerializerMethodField(read_only=True)
- 
-    class Meta:
-        model = Title
-        fields = ['id', 'name', 'year', 'rating', 'description', 'genre',
-                  'category']
-        
-    def get_rating(self, obj):
-        rating = obj.reviews.aggregate(Avg('score'))['score__avg']
-        if rating is not None:
-            return round(rating)
-        return None
-    
-    # def to_representation(self, instance):
-    #     self.fields['genre'] = GenreSerializer(many=True)
-    #     self.fields['category'] = CategorySerializer()
-    #     return super().to_representation(instance)
-    
-    # def to_representation(self, instance):
-    #     request = self.context.get('request')
-    #     context = {'request': request}
-    #     return TitleSerializerRead(instance, context=context).data
-    
- 
- 
-class TitleSerializerWrite(serializers.ModelSerializer):
-    category = serializers.SlugRelatedField(
+
+class CategoryTitle(serializers.SlugRelatedField):
+    def to_representation(self, value):
+        serializer = CategorySerializer(value)
+        return serializer.data
+
+
+class GenreTitle(serializers.SlugRelatedField):
+    def to_representation(self, value):
+        serializer = GenreSerializer(value)
+        return serializer.data
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    category = CategoryTitle(
         slug_field='slug',
-        queryset=Category.objects.all()
-        )
-    genre = serializers.SlugRelatedField(
-        many=True,
+        queryset=Category.objects.all(),
+        required=False
+    )
+    genre = GenreTitle(
         slug_field='slug',
-        queryset=Genre.objects.all())
+        queryset=Genre.objects.all(),
+        many=True
+    )
     rating = serializers.SerializerMethodField(read_only=True)
- 
+
     class Meta:
         model = Title
         fields = ['id', 'name', 'year', 'rating', 'description', 'genre',
                   'category']
         read_only_fields = ['id']
-        validators = [
-            validators.UniqueTogetherValidator(
-            queryset=Title.objects.all(),
-            fields=['name', 'category'],
-            message='Такая запись уже есть'
-            )
-        ]
-        
+
     def validate_year(self, value):
         year_now = datetime.now().year
         if value > year_now:
             raise serializers.ValidationError(
                 "Будущее еще не наступило")
         return value
- 
+
     def get_rating(self, obj):
         rating = obj.reviews.aggregate(Avg('score'))['score__avg']
         if rating is not None:
             return round(rating)
         return None
-    
-    def to_representation(self, instance):
-        self.fields['genre'] = GenreSerializer(many=True)
-        self.fields['category'] = CategorySerializer()
-        return super().to_representation(instance)
-
-    # def to_representation(self, instance):
-    #     request = self.context.get('request')
-    #     context = {'request': request}
-    #     return TitleSerializerRead(instance, context=context).data
