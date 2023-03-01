@@ -77,13 +77,6 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
-        # validators = [
-        #     validators.UniqueTogetherValidator(
-        #     queryset=Title.objects.all(),
-        #     fields=['id', 'author'],
-        #     message='Такая запись уже есть'
-        #     )
-        # ]
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -158,10 +151,10 @@ class TitleSerializerWrite(serializers.ModelSerializer):
             return round(rating)
         return None
     
-    # def to_representation(self, instance):
-    #     self.fields['genre'] = GenreSerializer(many=True)
-    #     self.fields['category'] = CategorySerializer()
-    #     return super().to_representation(instance)
+    def to_representation(self, instance):
+        self.fields['genre'] = GenreSerializer(many=True)
+        self.fields['category'] = CategorySerializer()
+        return super().to_representation(instance)
 
     # def to_representation(self, instance):
     #     request = self.context.get('request')
