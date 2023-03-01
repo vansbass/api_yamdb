@@ -54,6 +54,20 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    def validate(self, data):
+        # Берем автора и тайтл из контекста
+        author = self.context['request'].user
+        title = get_object_or_404(
+            Title,
+            id=self.context['view'].kwargs['title_id']
+        )
+        # Если уже есть ревью на этот тайтл от автора, то рейзим ошибку
+        if title.reviews.filter(author=author).exists():
+            # Но разрешаем модератору делать PATCH и PUT-запрос
+            if self.context['request'].method != ('PATCH' or 'PUT'):
+                raise serializers.ValidationError('Вы можете оставить только один отзыв')
+        return data
+
     def validate_score(self, value):
         """Check that score in range 0 - 10"""
         if value > 10 or value < 0:
@@ -89,7 +103,6 @@ class TitleSerializerRead(serializers.ModelSerializer):
         fields = ['id', 'name', 'year', 'rating', 'description', 'genre',
                   'category']
         
- 
     def get_rating(self, obj):
         rating = obj.reviews.aggregate(Avg('score'))['score__avg']
         if rating is not None:
