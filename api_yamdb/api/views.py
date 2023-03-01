@@ -9,7 +9,7 @@ from reviews.models import (
 )
 from .serializers import (
     CategorySerializer, CommentSerializer, GenreSerializer,
-    ReviewSerializer, TitleSerializerRead, TitleSerializerWrite
+    ReviewSerializer, TitleSerializer
 )
 from rest_framework.decorators import action
 
@@ -34,7 +34,7 @@ class CategoryDeleteView(generics.DestroyAPIView):
         slug = self.kwargs.get('slug')
         print(slug)
         return get_object_or_404(Category, slug=slug)
-    
+
 
 class GenreView(generics.ListCreateAPIView):
     queryset = Genre.objects.all()
@@ -92,22 +92,4 @@ class TitleViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = Title.objects.all()
     permission_classes = [AdminPermission, ]
- 
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return TitleSerializerRead
-        return TitleSerializerWrite
-    
-    def perform_create(self, serializer):
-        genre_slugs = self.request.data.get('genre')
-        genres = Genre.objects.filter(slug__in=genre_slugs)
-        serializer.save(genre=genres)
- 
-    # def perform_create(self, serializer):
-    #     category_slug = self.request.data['category']
-    #     genre = self.request.data['genre']
-    #     category = get_object_or_404(Category, slug=category_slug)
-    #     genres = []
-    #     for item in genre:
-    #         genres.append(get_object_or_404(Genre, slug=item))
-    #     serializer.save(category=category, genre=genres)
+    serializer_class = TitleSerializer
