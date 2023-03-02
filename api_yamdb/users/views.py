@@ -76,7 +76,10 @@ class UsersListCreateView(generics.ListCreateAPIView):
     filter_backends = [filters.SearchFilter]
     search_fields = ('username',)
     permission_classes = (AdminPermission,)
-
+    # Если значение поля role не передано в запросе,
+    # то устанавливаем значение поля role по умолчанию на user.
+    def perform_create(self, serializer):
+        serializer.save(role=self.request.data.get('role', 'user'))
 
 
 class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -85,6 +88,7 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ('username',)
+    ROLES = ['admin', 'user', 'moderator']
 
     def get_object(self):
         username = self.kwargs.get('username')
@@ -95,6 +99,24 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         except Http404:
             raise exceptions.ValidationError("Такого пользователя несуществует")
         return user
+
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        role = request.data.get('role')
+        if role and role not in self.ROLES:
+            return Response(
+                {'role': 'Invalid role'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        self.perform_update(serializer)
+        return Response(serializer.data)
     
     def destroy(self, request, *args, **kwargs):
         if self.kwargs.get('username') == 'me':
