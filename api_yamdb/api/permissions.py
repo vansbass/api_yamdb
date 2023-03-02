@@ -62,3 +62,30 @@ class AuthorStaffOrReadOnlyPermission(BasePermission):
             or request.user.is_staff
             or obj.author == request.user
         )
+
+
+class UserOrStaffPermission(BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_anonymous:
+            return False
+        return (
+            request.user.role == 'admin'
+            or request.user.is_staff
+        )
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_anonymous:
+            return False
+        return False
+    
+
+class MePermission(BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_anonymous:
+            return False
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_anonymous:
+            return False
+        return True

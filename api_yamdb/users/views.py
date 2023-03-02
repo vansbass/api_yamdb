@@ -11,7 +11,7 @@ from .models import User
 from rest_framework.decorators import action
 
 from .serializers import RegistrationSerializer, TokenSerializer, UserSerializer
-from api.permissions import AdminPermission, AuthorStaffOrReadOnlyPermission
+from api.permissions import AdminPermission, AuthorStaffOrReadOnlyPermission, UserOrStaffPermission, MePermission
 
 
 class RegistrationViewSet(viewsets.ModelViewSet):
@@ -85,7 +85,6 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ('username',)
-    pagination_class = (AuthorStaffOrReadOnlyPermission,)
 
     def get_object(self):
         username = self.kwargs.get('username')
@@ -96,3 +95,15 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         except Http404:
             raise exceptions.ValidationError("Такого пользователя несуществует")
         return user
+    
+    def destroy(self, request, *args, **kwargs):
+        if self.kwargs.get('username') == 'me':
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return super().destroy(request, *args, **kwargs)
+    
+    def get_permissions(self):
+        if self.kwargs.get('username') == 'me':
+            self.permission_classes = (MePermission,)
+        else:
+            self.permission_classes = (AdminPermission,)
+        return super(UserRetrieveUpdateDestroyView, self).get_permissions()
