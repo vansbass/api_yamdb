@@ -14,7 +14,7 @@ class User(AbstractUser):
 
     username = models.CharField(
         unique=True, blank=False, max_length=150,
-        validators=[RegexValidator(regex='^[\w.@+-]+\Z')]
+        validators=[RegexValidator(regex=r'^[\w.@+-]+\Z')]
     )
     email = models.EmailField(unique=True, blank=False, max_length=254)
     first_name = models.CharField(max_length=150, blank=True)
