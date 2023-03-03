@@ -58,9 +58,10 @@ class CategoriesOrGenresViewSet(ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
     def get_permissions(self):
-        if self.request.method in ['POST', 'DELETE']:
-            self.permission_classes = (AdminPermission,)
-        if self.kwargs.get('pk') is not None:
+        if (
+            self.request.method in ['POST', 'DELETE']
+            or self.kwargs.get('pk') is not None
+        ):
             self.permission_classes = (AdminPermission,)
         return super(CategoriesOrGenresViewSet, self).get_permissions()
 

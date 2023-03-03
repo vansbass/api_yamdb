@@ -66,11 +66,7 @@ class AuthorStaffOrReadOnlyPermission(BasePermission):
 
 class MePermission(BasePermission):
     def has_permission(self, request, view):
-        if request.user.is_anonymous:
-            return False
-        return True
+        return not request.user.is_anonymous
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_anonymous:
-            return False
-        return True
+        return not request.user.is_anonymous

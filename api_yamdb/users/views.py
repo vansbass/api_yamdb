@@ -59,8 +59,6 @@ class UsersViewSet(ModelViewSet):
     def get_permissions(self):
         if self.kwargs.get('pk') == 'me':
             self.permission_classes = (MePermission,)
-        elif self.kwargs.get('pk') is not None:
-            self.permission_classes = (AdminPermission,)
         else:
             self.permission_classes = (AdminPermission,)
         return super(UsersViewSet, self).get_permissions()
