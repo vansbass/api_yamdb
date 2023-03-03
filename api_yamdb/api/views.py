@@ -1,6 +1,7 @@
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
-from rest_framework import filters, status, mixins, generics
+from rest_framework import exceptions, filters, status
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from .permissions import (
@@ -15,49 +16,112 @@ from .serializers import (
     ReviewSerializer, TitleSerializer
 )
 from .filters import TitleFilter
-from rest_framework.decorators import action
 
 
-class CategoriesView(generics.ListCreateAPIView):
+class CategoryViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'delete']
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (AdminOrReadOnlyPermission,)
     filter_backends = [filters.SearchFilter]
     search_fields = ('name',)
 
+    def get_object(self):
+        slug = self.kwargs.get('pk')
+        try:
+            category = get_object_or_404(Category, slug=slug)
+        except Http404:
+            raise exceptions.ValidationError('Такой категории нет')
+        return category
+    
+    def retrieve(self, request, *args, **kwargs):
+        if self.kwargs.get('pk') is not None and self.request.method == 'GET':
+            return Response(
+                {'Warning': 'Method not Allowed'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return super().retrieve(request, *args, **kwargs)   
+    
+    def get_permissions(self):
+        print(self.kwargs)
+        if self.request.method in ['POST','DELETE']:
+            self.permission_classes = (AdminPermission,)
+        if self.kwargs.get('pk') is not None:
+            self.permission_classes = (AdminPermission,)
+        return super(CategoryViewSet, self).get_permissions()
 
-class CategoryDeleteView(generics.DestroyAPIView):
+
+class GenresViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'delete']
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-    permission_classes = (AdminPermission,)
-
-    def get_object(self):
-        print(self.kwargs)
-        slug = self.kwargs.get('slug')
-        print(slug)
-        return get_object_or_404(Category, slug=slug)
-
-
-class GenreView(generics.ListCreateAPIView):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (AdminOrReadOnlyPermission,)
     filter_backends = [filters.SearchFilter]
     search_fields = ('name',)
 
-
-class GenreDeleteView(generics.DestroyAPIView):
-    queryset = Genre.objects.all()
-    serializer_class = GenreSerializer
-    permission_classes = (AdminPermission,)
-
     def get_object(self):
+        slug = self.kwargs.get('pk')
+        try:
+            genre = get_object_or_404(Genre, slug=slug)
+        except Http404:
+            raise exceptions.ValidationError('Такого жанра нет')
+        return genre
+    
+    def retrieve(self, request, *args, **kwargs):
+        if self.kwargs.get('pk') is not None and self.request.method == 'GET':
+            return Response(
+                {'erorr': 'Method not Allowed'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return super().retrieve(request, *args, **kwargs)   
+    
+    def get_permissions(self):
         print(self.kwargs)
-        slug = self.kwargs.get('slug')
-        print(slug)
-        return get_object_or_404(Genre, slug=slug)
+        if self.request.method in ['POST','DELETE']:
+            self.permission_classes = (AdminPermission,)
+        if self.kwargs.get('pk') is not None:
+            self.permission_classes = (AdminPermission,)
+        return super(GenresViewSet, self).get_permissions()
+
+
+# class CategoriesView(generics.ListCreateAPIView):
+#     http_method_names = ['get', 'post', 'delete']
+#     queryset = Category.objects.all()
+#     serializer_class = CategorySerializer
+#     permission_classes = (AdminOrReadOnlyPermission,)
+#     filter_backends = [filters.SearchFilter]
+#     search_fields = ('name',)
+
+
+# class CategoryDeleteView(generics.DestroyAPIView):
+#     http_method_names = ['get', 'post', 'delete']
+#     queryset = Category.objects.all()
+#     serializer_class = CategorySerializer
+#     permission_classes = (AdminPermission,)
+
+#     def get_object(self):
+#         print(self.kwargs)
+#         slug = self.kwargs.get('slug')
+#         print(slug)
+#         return get_object_or_404(Category, slug=slug)
+
+
+# class GenreView(generics.ListCreateAPIView):
+#     queryset = Genre.objects.all()
+#     serializer_class = GenreSerializer
+#     permission_classes = (AdminOrReadOnlyPermission,)
+#     filter_backends = [filters.SearchFilter]
+#     search_fields = ('name',)
+
+
+# class GenreDeleteView(generics.DestroyAPIView):
+#     queryset = Genre.objects.all()
+#     serializer_class = GenreSerializer
+#     permission_classes = (AdminPermission,)
+
+#     def get_object(self):
+#         print(self.kwargs)
+#         slug = self.kwargs.get('slug')
+#         print(slug)
+#         return get_object_or_404(Genre, slug=slug)
 
 
 class CommentViewSet(ModelViewSet):
@@ -66,7 +130,12 @@ class CommentViewSet(ModelViewSet):
     permission_classes = (AuthorStaffOrReadOnlyPermission,)
 
     def get_queryset(self):
-        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+        try:
+            review = get_object_or_404(
+                Review, pk=self.kwargs.get('review_id')
+            )
+        except Http404: 
+            raise exceptions.ValidationError('Такого ревью нет')
         return review.comments.all()
 
     def perform_create(self, serializer):
@@ -82,7 +151,12 @@ class ReviewViewSet(ModelViewSet):
     permission_classes = (AuthorStaffOrReadOnlyPermission,)
 
     def get_queryset(self):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        try:
+            title = get_object_or_404(
+                Title, pk=self.kwargs.get('title_id')
+            )
+        except Http404: 
+            raise exceptions.ValidationError('Такого произведения нет')
         return title.reviews.all()
 
     def perform_create(self, serializer):

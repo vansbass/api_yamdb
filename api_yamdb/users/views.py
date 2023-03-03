@@ -2,6 +2,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.viewsets import ModelViewSet
 from rest_framework import exceptions, generics, viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
@@ -11,7 +12,7 @@ from .models import User
 from rest_framework.decorators import action
 
 from .serializers import RegistrationSerializer, TokenSerializer, UserSerializer
-from api.permissions import AdminPermission, AuthorStaffOrReadOnlyPermission, UserOrStaffPermission, MePermission
+from api.permissions import AdminPermission, MePermission
 
 
 class RegistrationViewSet(viewsets.ModelViewSet):
@@ -69,21 +70,73 @@ class TokenView(APIView):
 #     def me(self, request):
 #         return self.retrieve(request, request.user)
 
-class UsersListCreateView(generics.ListCreateAPIView):
-    http_method_names = ['get', 'post']
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ('username',)
-    permission_classes = (AdminPermission,)
-    # Если значение поля role не передано в запросе,
-    # то устанавливаем значение поля role по умолчанию на user.
-    def perform_create(self, serializer):
-        serializer.save(role=self.request.data.get('role', 'user'))
+# class UsersListCreateView(generics.ListCreateAPIView):
+#     http_method_names = ['get', 'post']
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#     filter_backends = [filters.SearchFilter]
+#     search_fields = ('username',)
+#     permission_classes = (AdminPermission,)
+#     # Если значение поля role не передано в запросе,
+#     # то устанавливаем значение поля role по умолчанию на user.
+#     def perform_create(self, serializer):
+#         serializer.save(role=self.request.data.get('role', 'user'))
+
+# # Попробовать объеденить
+# class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     http_method_names = ['get', 'patch', 'delete']
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#     filter_backends = [filters.SearchFilter]
+#     search_fields = ('username',)
+#     ROLES = ['admin', 'user', 'moderator']
+
+#     def get_object(self):
+#         username = self.kwargs.get('username')
+#         if username == 'me':
+#             return self.request.user
+#         try:
+#             user = get_object_or_404(User, username=username)
+#         except Http404:
+#             raise exceptions.ValidationError("Такого пользователя несуществует")
+#         return user
 
 
-class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    http_method_names = ['get', 'patch', 'delete']
+#     def partial_update(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(
+#             instance,
+#             data=request.data,
+#             partial=True
+#         )
+#         serializer.is_valid(raise_exception=True)
+#         role = request.data.get('role')
+#         if role and role not in self.ROLES:
+#             return Response(
+#                 {'role': 'Invalid role'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+#         self.perform_update(serializer)
+#         return Response(serializer.data)
+    
+#     def destroy(self, request, *args, **kwargs):
+#         if self.kwargs.get('username') == 'me':
+#             return Response(
+#                 {'Error': 'Нельзя удалить свой профиль'},
+#                 status=status.HTTP_405_METHOD_NOT_ALLOWED
+#             )
+#         return super().destroy(request, *args, **kwargs)
+    
+#     def get_permissions(self):
+#         if self.kwargs.get('username') == 'me':
+#             self.permission_classes = (MePermission,)
+#         else:
+#             self.permission_classes = (AdminPermission,)
+#         return super(UserRetrieveUpdateDestroyView, self).get_permissions()
+    
+
+class UsersViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filter_backends = [filters.SearchFilter]
@@ -91,7 +144,7 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     ROLES = ['admin', 'user', 'moderator']
 
     def get_object(self):
-        username = self.kwargs.get('username')
+        username = self.kwargs.get('pk')
         if username == 'me':
             return self.request.user
         try:
@@ -100,6 +153,8 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             raise exceptions.ValidationError("Такого пользователя несуществует")
         return user
 
+    def perform_create(self, serializer):
+        serializer.save(role=self.request.data.get('role', 'user'))
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -119,13 +174,18 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         return Response(serializer.data)
     
     def destroy(self, request, *args, **kwargs):
-        if self.kwargs.get('username') == 'me':
-            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        if self.kwargs.get('pk') == 'me':
+            return Response(
+                {'Error': 'Нельзя удалить свой профиль'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
         return super().destroy(request, *args, **kwargs)
     
     def get_permissions(self):
-        if self.kwargs.get('username') == 'me':
+        if self.kwargs.get('pk') == 'me':
             self.permission_classes = (MePermission,)
+        elif self.kwargs.get('pk') is not None:
+            self.permission_classes = (AdminPermission,)
         else:
             self.permission_classes = (AdminPermission,)
-        return super(UserRetrieveUpdateDestroyView, self).get_permissions()
+        return super(UsersViewSet, self).get_permissions()
