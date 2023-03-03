@@ -2,6 +2,7 @@ from api.views import (CategoriesOrGenresViewSet, ReviewOrCommentViewSet,
                        TitleViewSet)
 from django.urls import include, path
 from rest_framework import routers
+
 from users.views import AuthSignupAPIView, TokenAPIView, UsersViewSet
 
 app_name = 'api'

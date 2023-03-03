@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import AccessToken
+
 from users.models import User
 from users.serializers import SignupSerializer, TokenSerializer, UserSerializer
 
