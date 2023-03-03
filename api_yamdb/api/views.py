@@ -1,95 +1,111 @@
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
-from rest_framework import filters, status, mixins, generics
-from rest_framework.viewsets import ModelViewSet
+from django.http import Http404
 from django_filters.rest_framework import DjangoFilterBackend
-from .permissions import (
-    AdminPermission, AdminOrReadOnlyPermission,
+from django.shortcuts import get_object_or_404
+from rest_framework import exceptions, filters, status
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+
+from api.filters import TitleFilter
+from api.permissions import (
+    AdminOrReadOnlyPermission, AdminPermission,
     AuthorStaffOrReadOnlyPermission
+)
+from api.serializers import (
+    CategorySerializer, CommentSerializer, GenreSerializer,
+    ReviewSerializer, TitleSerializer
 )
 from reviews.models import (
     Category, Genre, Review, Title
 )
-from .serializers import (
-    CategorySerializer, CommentSerializer, GenreSerializer,
-    ReviewSerializer, TitleSerializer
-)
-from .filters import TitleFilter
-from rest_framework.decorators import action
 
 
-class CategoriesView(generics.ListCreateAPIView):
+class CategoriesOrGenresViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'delete']
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-    permission_classes = (AdminOrReadOnlyPermission,)
     filter_backends = [filters.SearchFilter]
     search_fields = ('name',)
 
-
-class CategoryDeleteView(generics.DestroyAPIView):
-    http_method_names = ['get', 'post', 'delete']
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-    permission_classes = (AdminPermission,)
-
-    def get_object(self):
-        print(self.kwargs)
-        slug = self.kwargs.get('slug')
-        print(slug)
-        return get_object_or_404(Category, slug=slug)
-
-
-class GenreView(generics.ListCreateAPIView):
-    queryset = Genre.objects.all()
-    serializer_class = GenreSerializer
-    permission_classes = (AdminOrReadOnlyPermission,)
-    filter_backends = [filters.SearchFilter]
-    search_fields = ('name',)
-
-
-class GenreDeleteView(generics.DestroyAPIView):
-    queryset = Genre.objects.all()
-    serializer_class = GenreSerializer
-    permission_classes = (AdminPermission,)
+    def get_queryset(self):
+        if self.basename == 'categories':
+            return Category.objects.all()
+        elif self.basename == 'genres':
+            return Genre.objects.all()
+    
+    def get_serializer_class(self):
+        if self.basename == 'categories':
+            self.serializer_class = CategorySerializer
+        elif self.basename == 'genres':
+            self.serializer_class = GenreSerializer
+        return super(CategoriesOrGenresViewSet, self).get_serializer_class()
 
     def get_object(self):
-        print(self.kwargs)
-        slug = self.kwargs.get('slug')
-        print(slug)
-        return get_object_or_404(Genre, slug=slug)
+        slug = self.kwargs.get('pk')
+        obj = None
+        try:
+            if self.basename == 'categories':
+                obj = get_object_or_404(Category, slug=slug)
+            elif self.basename == 'genres':
+                obj = get_object_or_404(Genre, slug=slug)
+        except Http404:
+            raise exceptions.ValidationError('Такой объекта нет')
+        return obj
+    
+    def retrieve(self, request, *args, **kwargs):
+        if self.kwargs.get('pk') is not None and self.request.method == 'GET':
+            return Response(
+                {'Warning': 'Method not Allowed'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return super().retrieve(request, *args, **kwargs)   
+    
+    def get_permissions(self):
+        print(self.basename)
+        if self.request.method in ['POST','DELETE']:
+            self.permission_classes = (AdminPermission,)
+        if self.kwargs.get('pk') is not None:
+            self.permission_classes = (AdminPermission,)
+        return super(CategoriesOrGenresViewSet, self).get_permissions()
 
 
-class CommentViewSet(ModelViewSet):
+class ReviewOrCommentViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
-    serializer_class = CommentSerializer
     permission_classes = (AuthorStaffOrReadOnlyPermission,)
 
     def get_queryset(self):
-        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
-        return review.comments.all()
+        obj = None
+        try:
+            if self.basename == 'reviews':
+                obj = get_object_or_404(
+                    Title, pk=self.kwargs.get('title_id')
+                )
+            elif self.basename == 'comments':
+                obj = get_object_or_404(
+                    Review, pk=self.kwargs.get('review_id')
+                )
+        except Http404: 
+            raise exceptions.ValidationError('Такого произведения нет')
+        if self.basename == 'reviews':
+            return obj.reviews.all()
+        elif self.basename == 'comments':
+            return obj.comments.all()
+    
+    def get_serializer_class(self):
+        if self.basename == 'reviews':
+            self.serializer_class = ReviewSerializer
+        elif self.basename == 'comments':
+            self.serializer_class = CommentSerializer
+        return super(ReviewOrCommentViewSet, self).get_serializer_class()
 
     def perform_create(self, serializer):
-        serializer.save(
-            author=self.request.user,
-            review=get_object_or_404(Review, pk=self.kwargs.get('review_id'))
-        )
-
-
-class ReviewViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'patch', 'delete']
-    serializer_class = ReviewSerializer
-    permission_classes = (AuthorStaffOrReadOnlyPermission,)
-
-    def get_queryset(self):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        return title.reviews.all()
-
-    def perform_create(self, serializer):
-        serializer.save(
-            author=self.request.user,
-            title=get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        )
+        if self.basename == 'reviews':
+            serializer.save(
+                author=self.request.user,
+                title=get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+            )
+        elif self.basename == 'comments':
+            serializer.save(
+                author=self.request.user,
+                review=get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+            )
 
 
 class TitleViewSet(ModelViewSet):
@@ -99,3 +115,5 @@ class TitleViewSet(ModelViewSet):
     serializer_class = TitleSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
+
+
