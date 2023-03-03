@@ -1,21 +1,22 @@
 from django.http import Http404
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
-from rest_framework import exceptions, filters, status
-from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
-from .permissions import (
-    AdminPermission, AdminOrReadOnlyPermission,
+from django.shortcuts import get_object_or_404
+from rest_framework import exceptions, filters, status
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+
+from api.filters import TitleFilter
+from api.permissions import (
+    AdminOrReadOnlyPermission, AdminPermission,
     AuthorStaffOrReadOnlyPermission
+)
+from api.serializers import (
+    CategorySerializer, CommentSerializer, GenreSerializer,
+    ReviewSerializer, TitleSerializer
 )
 from reviews.models import (
     Category, Genre, Review, Title
 )
-from .serializers import (
-    CategorySerializer, CommentSerializer, GenreSerializer,
-    ReviewSerializer, TitleSerializer
-)
-from .filters import TitleFilter
 
 
 class CategoriesOrGenresViewSet(ModelViewSet):
