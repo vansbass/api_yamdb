@@ -1,10 +1,16 @@
-from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from users.models import User
+from .models import User
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
+class SignupSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True, max_length=254)
+    username = serializers.RegexField(
+        regex=r'^[\w.@+-]+\Z$',
+        required=True,
+        max_length=150
+    )
 
     class Meta:
         model = User
@@ -17,25 +23,27 @@ class RegistrationSerializer(serializers.ModelSerializer):
             )
         return username
 
-    def create(self, validated_data):
-        confirmation_code = User.objects.make_random_password(length=10)
-        user = User.objects.create(
-            confirmation_code=confirmation_code,
-            **validated_data)
-        user.save()
-        send_mail('Confirmation code for the Yambd Api',
-                  f'{confirmation_code}',
-                  user.email, ['noreply@yambd.ru'],
-                  fail_silently=False,
-                  )
-        return user
 
-
-class TokenSerializer(serializers.Serializer):
+class TokenSerializer(serializers.ModelSerializer):
     confirmation_code = serializers.CharField(
-        max_length=10,
+        max_length=10, required=True
     )
-    username = serializers.CharField(max_length=150)
+    username = serializers.CharField(max_length=150, required=True)
+
+    def validate(self, data):
+        user = get_object_or_404(
+            User,
+            username=data['username']
+        )
+        if user.confirmation_code != data['confirmation_code']:
+            raise serializers.ValidationError(
+                'Не совпадает код подтверждения!'
+            )
+        return data
+
+    class Meta:
+        fields = ('username', 'confirmation_code',)
+        model = User
 
 
 class UserSerializer(serializers.ModelSerializer):

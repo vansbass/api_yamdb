@@ -1,55 +1,51 @@
+from django.core.mail import send_mail
+from django.db import IntegrityError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from rest_framework import exceptions, filters,status, viewsets
-from rest_framework.permissions import AllowAny
+from rest_framework import exceptions, filters, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 from api.permissions import AdminPermission, MePermission
 from users.models import User
-from users.serializers import RegistrationSerializer, TokenSerializer, UserSerializer
+from users.serializers import SignupSerializer, TokenSerializer, UserSerializer
 
 
-class RegistrationViewSet(viewsets.ModelViewSet):
-    """
-    Разрешить всем пользователям (аутентифицированным и нет)
-    доступ к данному эндпоинту.
-    """
-    queryset = User.objects.all()
-    permission_classes = (AllowAny,)
-    serializer_class = RegistrationSerializer
+class AuthSignupAPIView(APIView):
+    def post(self, request):
+        serializer = SignupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            user, created = User.objects.get_or_create(
+                            email=serializer.validated_data['email'],
+                            username=serializer.validated_data['username'],
+            )
+        except IntegrityError as error:
+            return Response(f'{error}', status=status.HTTP_400_BAD_REQUEST)
+
+        send_mail(
+            'Код подтверждения',
+            f'{user.confirmation_code}',
+            'noreply@yambd.ru', [user.email],
+            fail_silently=False,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class TokenView(APIView):
-    """
-    Получить токен с помощью username и confirmation_code.
-    """
-    permission_classes = (AllowAny,)
-
+class TokenAPIView(APIView):
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
-        if serializer.is_valid():
-            username = serializer.initial_data.get('username')
-            user = get_object_or_404(User, username=username)
-            confirmation_code = serializer.initial_data.get(
-                'confirmation_code'
-            )
-
-            if user.confirmation_code != confirmation_code:
-                return Response(
-                    {"confirmation_code": "incorrect"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            refresh = RefreshToken.for_user(user)
-            return Response(
-                {'token': str(refresh.access_token)},
-                status=status.HTTP_200_OK
-            )
+        serializer.is_valid(raise_exception=True)
+        user = get_object_or_404(
+            User,
+            username=serializer.validated_data.get('username')
+        )
+        token = AccessToken.for_user(user)
         return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
+            data={'token': str(token)},
+            status=status.HTTP_200_OK
         )
 
 
@@ -90,7 +86,7 @@ class UsersViewSet(ModelViewSet):
             )
         self.perform_update(serializer)
         return Response(serializer.data)
-    
+
     def destroy(self, request, *args, **kwargs):
         if self.kwargs.get('pk') == 'me':
             return Response(
@@ -98,7 +94,7 @@ class UsersViewSet(ModelViewSet):
                 status=status.HTTP_405_METHOD_NOT_ALLOWED
             )
         return super().destroy(request, *args, **kwargs)
-    
+
     def get_permissions(self):
         if self.kwargs.get('pk') == 'me':
             self.permission_classes = (MePermission,)
