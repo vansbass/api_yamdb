@@ -1,3 +1,4 @@
+from api.permissions import AdminPermission, MePermission
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.http import Http404
@@ -7,8 +8,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import AccessToken
-
-from api.permissions import AdminPermission, MePermission
 from users.models import User
 from users.serializers import SignupSerializer, TokenSerializer, UserSerializer
 

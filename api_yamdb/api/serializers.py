@@ -1,14 +1,10 @@
-from datetime import datetime
 import re
+from datetime import datetime
 
-from django.http import Http404
-from django.shortcuts import get_object_or_404
-from rest_framework import serializers, validators
 from django.db.models import Avg
-
-from reviews.models import (
-    Category, Comment, Genre, Review, Title
-)
+from django.shortcuts import get_object_or_404
+from rest_framework import serializers
+from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 
 
