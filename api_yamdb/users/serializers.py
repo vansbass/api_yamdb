@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from .models import User
+from users.models import User
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -28,7 +28,9 @@ class TokenSerializer(serializers.ModelSerializer):
     confirmation_code = serializers.CharField(
         max_length=10, required=True
     )
-    username = serializers.CharField(max_length=150, required=True)
+    username = serializers.CharField(
+        max_length=150, required=True
+    )
 
     def validate(self, data):
         user = get_object_or_404(
@@ -47,9 +49,11 @@ class TokenSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """ Ощуществляет сериализацию и десериализацию объектов User. """
     role = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'bio', 'role']
+        fields = [
+            'username', 'email', 'first_name',
+            'last_name', 'bio', 'role'
+        ]

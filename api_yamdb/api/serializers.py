@@ -1,14 +1,11 @@
-from datetime import datetime
 import re
+from datetime import datetime
 
-from django.http import Http404
-from django.shortcuts import get_object_or_404
-from rest_framework import serializers, validators
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
+from rest_framework import serializers
 
-from reviews.models import (
-    Category, Comment, Genre, Review, Title
-)
+from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 
 
@@ -54,15 +51,12 @@ class ReviewSerializer(serializers.ModelSerializer):
     )
 
     def validate(self, data):
-        # Берем автора и тайтл из контекста
         author = self.context['request'].user
         title = get_object_or_404(
             Title,
             id=self.context['view'].kwargs['title_id']
         )
-        # Если уже есть ревью на этот тайтл от автора, то рейзим ошибку
         if title.reviews.filter(author=author).exists():
-            # Но разрешаем модератору делать PATCH и PUT-запрос
             if self.context['request'].method != ('PATCH' or 'PUT'):
                 raise serializers.ValidationError(
                     'Вы можете оставить только один отзыв')
@@ -77,20 +71,13 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
-        # validators = [
-        #     validators.UniqueTogetherValidator(
-        #     queryset=Title.objects.all(),
-        #     fields=['id', 'author'],
-        #     message='Такая запись уже есть'
-        #     )
-        # ]
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name',
-                  'last_name', 'bio', 'role']
+        fields = ('username', 'email', 'first_name',
+                  'last_name', 'bio', 'role')
 
 
 class CategoryTitle(serializers.SlugRelatedField):
@@ -120,9 +107,11 @@ class TitleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ['id', 'name', 'year', 'rating', 'description', 'genre',
-                  'category']
-        read_only_fields = ['id']
+        fields = (
+            'id', 'name', 'year', 'rating',
+            'description', 'genre', 'category'
+        )
+        read_only_fields = ('id',)
 
     def validate_year(self, value):
         year_now = datetime.now().year

@@ -4,12 +4,12 @@ from django.core.management.base import BaseCommand
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 
+
 class Command(BaseCommand):
     help = 'Import data from CSV files from /static/data/'
 
     def handle(self, *args, **options):
         path = 'static/data/'
-        
         print('Import Users')
         with open(path + 'users.csv', encoding="utf8") as csvfile:
             reader = csv.DictReader(csvfile)
@@ -62,7 +62,8 @@ class Command(BaseCommand):
             for row in reader:
                 Comment.objects.create(
                     id=row['id'], review_id=row['review_id'],
-                    text=row['text'], author_id=row['author'], pub_date=row['pub_date']
+                    text=row['text'], author_id=row['author'],
+                    pub_date=row['pub_date']
                 )
 
         print('Import Genre_Title')

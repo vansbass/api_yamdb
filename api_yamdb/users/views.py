@@ -1,3 +1,4 @@
+from api.permissions import AdminPermission, MePermission
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.http import Http404
@@ -7,8 +8,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import AccessToken
-
-from api.permissions import AdminPermission, MePermission
 from users.models import User
 from users.serializers import SignupSerializer, TokenSerializer, UserSerializer
 
@@ -19,8 +18,8 @@ class AuthSignupAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         try:
             user, created = User.objects.get_or_create(
-                            email=serializer.validated_data['email'],
-                            username=serializer.validated_data['username'],
+                email=serializer.validated_data.get('email'),
+                username=serializer.validated_data.get('username'),
             )
         except IntegrityError as error:
             return Response(f'{error}', status=status.HTTP_400_BAD_REQUEST)
@@ -57,14 +56,26 @@ class UsersViewSet(ModelViewSet):
     search_fields = ('username',)
     ROLES = ['admin', 'user', 'moderator']
 
+    def get_permissions(self):
+        if self.kwargs.get('pk') == 'me':
+            self.permission_classes = (MePermission,)
+        elif self.kwargs.get('pk') is not None:
+            self.permission_classes = (AdminPermission,)
+        else:
+            self.permission_classes = (AdminPermission,)
+        return super(UsersViewSet, self).get_permissions()
+
     def get_object(self):
         username = self.kwargs.get('pk')
+        user = None
         if username == 'me':
             return self.request.user
         try:
             user = get_object_or_404(User, username=username)
         except Http404:
-            raise exceptions.ValidationError("Такого пользователя несуществует")
+            raise exceptions.ValidationError(
+                "Такого пользователя несуществует"
+            )
         return user
 
     def perform_create(self, serializer):
@@ -94,12 +105,3 @@ class UsersViewSet(ModelViewSet):
                 status=status.HTTP_405_METHOD_NOT_ALLOWED
             )
         return super().destroy(request, *args, **kwargs)
-
-    def get_permissions(self):
-        if self.kwargs.get('pk') == 'me':
-            self.permission_classes = (MePermission,)
-        elif self.kwargs.get('pk') is not None:
-            self.permission_classes = (AdminPermission,)
-        else:
-            self.permission_classes = (AdminPermission,)
-        return super(UsersViewSet, self).get_permissions()
