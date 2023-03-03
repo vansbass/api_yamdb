@@ -4,7 +4,7 @@ from rest_framework import routers
 from api.views import (
     CategoriesOrGenresViewSet, ReviewOrCommentViewSet, TitleViewSet
 )
-from users.views import RegistrationViewSet, TokenView, UsersViewSet
+from users.views import AuthSignupAPIView, TokenAPIView, UsersViewSet
 
 app_name = 'api'
 
@@ -24,8 +24,8 @@ router.register(
     ReviewOrCommentViewSet,
     basename='comments'
 )
-router.register(r'auth/signup', RegistrationViewSet, basename='signup')
 urlpatterns = [
     path('api/v1/', include(router.urls)),
-    path('api/v1/auth/token/', TokenView.as_view()),
+    path('api/v1/auth/signup/', AuthSignupAPIView.as_view()),
+    path('api/v1/auth/token/', TokenAPIView.as_view()),
 ]
