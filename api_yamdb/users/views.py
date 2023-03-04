@@ -65,16 +65,14 @@ class UsersViewSet(ModelViewSet):
 
     def get_object(self):
         username = self.kwargs.get('pk')
-        user = None
         if username == 'me':
             return self.request.user
         try:
-            user = get_object_or_404(User, username=username)
+            return get_object_or_404(User, username=username)
         except Http404:
             raise exceptions.ValidationError(
                 "Такого пользователя несуществует"
             )
-        return user
 
     def perform_create(self, serializer):
         serializer.save(role=self.request.data.get('role', 'user'))

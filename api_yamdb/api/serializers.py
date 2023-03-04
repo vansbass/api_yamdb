@@ -13,7 +13,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ('name', 'slug')
+        exclude = ('id',)
 
     def validate_slug(self, value):
         if not re.match('^[-a-zA-Z0-9_]+$', value):
@@ -36,7 +36,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Genre
-        fields = ('name', 'slug')
+        exclude = ('id',)
 
     def validate_slug(self, value):
         if not re.match('^[-a-zA-Z0-9_]+$', value):
@@ -64,7 +64,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate_score(self, value):
         """Check that score in range 0 - 10"""
-        if value > 10 or value < 0:
+        if value > 10:  # score is PositiveSmallIntegerField
             raise serializers.ValidationError("Score not in range 0-10")
         return value
 
@@ -122,6 +122,5 @@ class TitleSerializer(serializers.ModelSerializer):
 
     def get_rating(self, obj):
         rating = obj.reviews.aggregate(Avg('score'))['score__avg']
-        if rating is not None:
+        if rating:
             return round(rating)
-        return None
