@@ -28,10 +28,9 @@ class CategoryViewSet(ModelViewSet):
     def get_object(self):
         slug = self.kwargs.get('pk')
         try:
-            category = get_object_or_404(Category, slug=slug)
+            return get_object_or_404(Category, slug=slug)
         except Http404:
             raise exceptions.ValidationError('Такой категории нет')
-        return category
 
     def retrieve(self, request, *args, **kwargs):
         if (
@@ -63,10 +62,9 @@ class GenresViewSet(ModelViewSet):
     def get_object(self):
         slug = self.kwargs.get('pk')
         try:
-            genre = get_object_or_404(Genre, slug=slug)
+            return get_object_or_404(Genre, slug=slug)
         except Http404:
             raise exceptions.ValidationError('Такого жанра нет')
-        return genre
 
     def retrieve(self, request, *args, **kwargs):
         if (
