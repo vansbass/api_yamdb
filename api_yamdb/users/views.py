@@ -1,3 +1,5 @@
+from enum import Enum, auto
+
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.http import Http404
@@ -49,13 +51,18 @@ class TokenAPIView(APIView):
         )
 
 
+class Role(Enum):
+    admin = auto()
+    user = auto()
+    moderator = auto()
+
+
 class UsersViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ('username',)
-    ROLES = ['admin', 'user', 'moderator']
 
     def get_permissions(self):
         if self.kwargs.get('pk') == 'me':
@@ -87,7 +94,7 @@ class UsersViewSet(ModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         role = request.data.get('role')
-        if role and role not in self.ROLES:
+        if role and role not in [role.name for role in Role]:
             return Response(
                 {'role': 'Invalid role'},
                 status=status.HTTP_400_BAD_REQUEST
