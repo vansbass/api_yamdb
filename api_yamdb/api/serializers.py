@@ -64,7 +64,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate_score(self, value):
         """Check that score in range 0 - 10"""
-        if value > 10:  # score is PositiveSmallIntegerField
+        if value > 10:
             raise serializers.ValidationError("Score not in range 0-10")
         return value
 

@@ -1,8 +1,18 @@
 import csv
+import logging
+import sys
 
 from django.core.management.base import BaseCommand
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s, %(levelname)s, %(message)s',
+    stream=sys.stdout
+)
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -10,7 +20,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         path = 'static/data/'
-        print('Import Users')
+        logger.info('Import Users')
         with open(path + 'users.csv', encoding="utf8") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -21,7 +31,7 @@ class Command(BaseCommand):
                     last_name=row['last_name']
                 )
 
-        print('Import Categories')
+        logger.info('Import Categories')
         with open(path + 'category.csv', encoding="utf8") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -29,7 +39,7 @@ class Command(BaseCommand):
                     id=row['id'], name=row['name'], slug=row['slug']
                 )
 
-        print('Import Genres')
+        logger.info('Import Genres')
         with open(path + 'genre.csv', encoding="utf8") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -37,7 +47,7 @@ class Command(BaseCommand):
                     id=row['id'], name=row['name'], slug=row['slug']
                 )
 
-        print('Import Titles')
+        logger.info('Import Titles')
         with open(path + 'titles.csv', encoding="utf8") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -46,7 +56,7 @@ class Command(BaseCommand):
                     year=row['year'], category_id=row['category']
                 )
 
-        print('Import Reviews')
+        logger.info('Import Reviews')
         with open(path + 'review.csv', encoding="utf8") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -56,7 +66,7 @@ class Command(BaseCommand):
                     score=row['score'], pub_date=row['pub_date']
                 )
 
-        print('Import Comments')
+        logger.info('Import Comments')
         with open(path + 'comments.csv', encoding="utf8") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -66,10 +76,11 @@ class Command(BaseCommand):
                     pub_date=row['pub_date']
                 )
 
-        print('Import Genre_Title')
+        logger.info('Import Genre_Title')
         with open(path + 'genre_title.csv', encoding="utf8") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 title = Title.objects.get(id=row['title_id'])
                 genre = Genre.objects.get(id=row['genre_id'])
                 title.genre.add(genre)
+        logger.info('Import CVS complete')
