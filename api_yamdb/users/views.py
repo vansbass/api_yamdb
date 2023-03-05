@@ -1,8 +1,9 @@
+from enum import Enum, auto
+
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from enum import Enum, auto
 from rest_framework import exceptions, filters, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
